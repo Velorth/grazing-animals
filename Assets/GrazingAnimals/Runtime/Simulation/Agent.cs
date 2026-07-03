@@ -27,11 +27,6 @@ namespace GrazingAnimals
          
             Profiler.BeginSample("Think");
             
-            if (IsTargetReached())
-            {
-                Target.Collect();
-            }
-            
             SelectDesiredVelocity(deltaTime);
             
             Profiler.EndSample();
@@ -54,6 +49,11 @@ namespace GrazingAnimals
 
         public void Move(float deltaTime)
         {
+            if (IsTargetReached(deltaTime))
+            {
+                Target.Collect();
+            }
+            
             transform.localPosition += Velocity * deltaTime;
         }
 
@@ -86,8 +86,6 @@ namespace GrazingAnimals
 
                 if (distance <= combinedRadius)
                 {
-                    // TODO: Handle collision?
-                    
                     distance = combinedRadius;
                 }
                 
@@ -128,9 +126,14 @@ namespace GrazingAnimals
             Velocity = velocity.To3D();
         }
 
-        private bool IsTargetReached()
+        private bool IsTargetReached(float deltaTime)
         {
-            return Vector3.Distance(transform.localPosition, Target.transform.localPosition) <= 1;
+            var targetPosition = Target.transform.localPosition.To2D();
+            var agentPosition = transform.localPosition.To2D();
+            var relativePosition = targetPosition - agentPosition;
+            var normal = relativePosition.normalized;
+            var velocityProjection = Vector2.Dot(Velocity, normal);
+            return velocityProjection * deltaTime >= relativePosition.magnitude - _radius * 2;
         }
     }
 }
