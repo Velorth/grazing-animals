@@ -65,26 +65,22 @@ namespace GrazingAnimals
             {
                 _positions.Add((x, y));
             }
+
+            var agentPositions = new List<(int, int)>(_positions);
             
             for (int i = 0; i < agentsCount; i++)
             {
-                var agentPosition = GetRandomPosition();
+                var agentPosition = GetRandomPosition(agentPositions);
                 var agent = Instantiate(_agentPrefab, agentPosition, Quaternion.identity);
                 agent.NeighboursProvider = this;
                 agent.MaxSpeed = speed;
                 _agents.Add(agent);
 
-                var foodPosition = GetRandomPosition();
+                var foodPosition = GetRandomPosition(_positions);
                 var food = Instantiate(_foodPrefab,foodPosition, Quaternion.identity);
                 food.Collected += () => OnFoodCollected(food);
 
                 agent.Target = food;
-            }
-
-            foreach (var agent in _agents)
-            {
-                var position = agent.transform.localPosition;
-                _positions.Add(((int)position.x, (int)position.z));
             }
 
             _isPaused = false;
@@ -96,7 +92,7 @@ namespace GrazingAnimals
             var foodPosition = food.transform.localPosition;
             
             _positions.Add(((int)foodPosition.x, (int)foodPosition.z));
-            food.transform.position = GetRandomPosition();
+            food.transform.position = GetRandomPosition(_positions);
         }
 
         public void StopSimulation()
@@ -251,11 +247,11 @@ namespace GrazingAnimals
             }
         }
 
-        private Vector3 GetRandomPosition()
+        private static Vector3 GetRandomPosition(List<(int, int)> positions)
         {
-            var take = Random.Range(0, _positions.Count);
-            var (x, z) = _positions[take];
-            _positions.FastRemoveAt(take);
+            var take = Random.Range(0, positions.Count);
+            var (x, z) = positions[take];
+            positions.FastRemoveAt(take);
             return new  Vector3(x, 0, z);
         }
 
